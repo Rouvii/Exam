@@ -1,0 +1,73 @@
+GET {{URL}}/auth/test
+
+###
+POST {{URL}}/auth/register
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "admin123"
+
+}
+
+###
+
+POST {{URL}}/auth/login
+
+{
+
+"username": "admin",
+"password": "admin123"
+
+}
+
+> {% client.global.set("jwt_token", response.body.token); %}
+
+
+
+### Get all trips
+GET {{url}}/trip/
+
+### Get trip by ID
+GET {{url}}/trip/12
+
+### Create a new trip
+POST {{url}}/trip/
+Content-Type: application/json
+
+{
+  "name": "New Trip",
+  "price": 5000,
+  "category": "CITY",
+  "startTime": "2025-06-01",
+  "endTime": "2025-06-10",
+  "startPosition": "New York"
+}
+
+### Update a trip by ID
+PUT {{url}}/trip/10
+Content-Type: application/json
+
+{
+  "name": "Updated Trip",
+  "price": 6000,
+  "category": "CITY",
+  "startTime": "2025-06-01",
+  "endTime": "2025-06-10",
+  "startPosition": "New York"
+}
+
+### Delete a trip by ID
+DELETE {{url}}/trip/13
+
+### Add a guide to a trip
+PUT {{url}}/trip/trips/10/guides/3
+
+### Get trips by guide ID
+GET {{url}}/trip/guides/3
+
+### Get trips by category
+GET {{url}}/trip/category/CITY
+
+### Get trips by price range
+GET {{url}}/trip/guides/totalprice
