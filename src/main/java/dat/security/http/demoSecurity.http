@@ -19,7 +19,7 @@ POST {{url}}/auth/login/
 
 > {%
     client.global.set("jwt_token", response.body.token);
-
+    console.log("JWT Token:", client.global.get("jwt_token"));
 %}
 
 ###

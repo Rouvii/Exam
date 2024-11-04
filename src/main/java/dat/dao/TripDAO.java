@@ -25,7 +25,7 @@ public class TripDAO implements IDao<TripDto>,ITripGuideDAO {
     public static TripDAO getInstance(EntityManagerFactory _emf) {
         if (instance == null) {
             emf = _emf;
-            instance = new TripDAO();
+            instance = new TripDAO(emf);
         }
         return instance;
     }

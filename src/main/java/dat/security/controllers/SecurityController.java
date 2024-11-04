@@ -14,6 +14,7 @@ import dat.security.exceptions.ValidationException;
 import dk.bugelhartmann.ITokenSecurity;
 import dk.bugelhartmann.TokenSecurity;
 import dk.bugelhartmann.UserDTO;
+import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import io.javalin.http.HttpStatus;
 import io.javalin.http.UnauthorizedResponse;
@@ -169,7 +170,7 @@ public class SecurityController implements ISecurityController {
                 throw new NotAuthorizedException(403, "Token is not valid");
             }
         } catch (ParseException | JOSEException | NotAuthorizedException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
             throw new ApiException(HttpStatus.UNAUTHORIZED.getCode(), "Unauthorized. Could not verify token");
         }
     }
@@ -186,11 +187,12 @@ public class SecurityController implements ISecurityController {
                 ctx.status(200).json(returnObject.put("msg", "Role " + newRole + " added to user"));
             } catch (EntityNotFoundException e) {
                 ctx.status(404).json("{\"msg\": \"User not found\"}");
-
-
-                
             }
         };
     }
 
+    // Health check for the API. Used in deployment
+    public void healthCheck(@NotNull Context ctx) {
+        ctx.status(200).json("{\"msg\": \"API is up and running\"}");
+    }
 }

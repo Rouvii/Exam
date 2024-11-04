@@ -15,9 +15,17 @@ import java.util.stream.Collectors;
 public class GuideDAO implements IDao<GuideDto> {
 
     private static EntityManagerFactory emf;
+    private static GuideDAO instance;
 
     public GuideDAO(EntityManagerFactory emf) {
         this.emf = emf;
+    }
+    public static GuideDAO getInstance(EntityManagerFactory _emf) {
+        if (instance == null) {
+            emf = _emf;
+            instance = new GuideDAO(emf);
+        }
+        return instance;
     }
 
     @Override

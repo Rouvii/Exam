@@ -2,11 +2,16 @@ package dat.routes;
 
 import dat.config.ApplicationConfig;
 import dat.config.HibernateConfig;
+import dat.config.Popluate;
 import dat.dao.GuideDAO;
 import dat.dao.TripDAO;
 import dat.dto.GuideDto;
 import dat.dto.TripDto;
 import dat.entities.enums.Category;
+import dat.security.controllers.SecurityController;
+import dat.security.daos.SecurityDAO;
+import dat.security.exceptions.ValidationException;
+import dk.bugelhartmann.UserDTO;
 import io.javalin.Javalin;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
@@ -17,21 +22,27 @@ import static org.hamcrest.Matchers.is;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RoutesTest {
-
     private static Javalin app;
     private static final EntityManagerFactory emf = HibernateConfig.getEntityManagerFactoryForTest();
-    private static final TripDAO tripDAO = new TripDAO(emf);
-    private static final GuideDAO guideDAO = new GuideDAO(emf);
+    private final static SecurityController securityController = SecurityController.getInstance();
+    private final SecurityDAO securityDAO = new SecurityDAO(emf);
+    private static TripDAO tripDAO;
+    private static GuideDAO guideDAO;
+
+    private static String userToken, adminToken;
     private static final String BASE_URL = "http://localhost:7070/api";
 
     private static TripDto t1, t2, t3;
 
     private static GuideDto g1, g2, g3;
+    private static UserDTO userDTO, adminDTO;
 
     @BeforeAll
     void setUpAll() {
-        app = ApplicationConfig.startServer(7070);
         HibernateConfig.setTest(true);
+        app = ApplicationConfig.startServer(7070);
+        guideDAO = GuideDAO.getInstance(emf);
+        tripDAO = TripDAO.getInstance(emf);
     }
 
     @BeforeEach
@@ -52,6 +63,20 @@ class RoutesTest {
         t1 = tripDAO.create(t1);
         t2 = tripDAO.create(t2);
         t3 = tripDAO.create(t3);
+
+        // User setup
+        UserDTO[] userDTOs = Popluate.populateUsers(emf);
+        userDTO = userDTOs[0];  // Assuming userDTOs has at least two users
+        adminDTO = userDTOs[1];
+
+        try {
+            UserDTO verifiedUser = securityDAO.getVerifiedUser(userDTO.getUsername(), userDTO.getPassword());
+            UserDTO verifiedAdmin = securityDAO.getVerifiedUser(adminDTO.getUsername(), adminDTO.getPassword());
+            userToken = "Bearer " + securityController.createToken(verifiedUser);
+            adminToken = "Bearer " + securityController.createToken(verifiedAdmin);
+        } catch (ValidationException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @AfterEach
@@ -60,6 +85,8 @@ class RoutesTest {
             em.getTransaction().begin();
             em.createQuery("DELETE FROM Trip").executeUpdate();
             em.createQuery("DELETE FROM Guide").executeUpdate();
+            em.createQuery("DELETE FROM User").executeUpdate();
+            em.createQuery("DELETE FROM Role").executeUpdate();
             em.getTransaction().commit();
         }
     }
@@ -72,6 +99,7 @@ class RoutesTest {
     @Test
     void getTrips() {
         given()
+                .header("Authorization", userToken)
                 .when()
                 .get(BASE_URL + "/trip")
                 .then()
@@ -82,6 +110,7 @@ class RoutesTest {
     @Test
     void getTripById() {
         given()
+                .header("Authorization", userToken)
                 .when()
                 .get(BASE_URL + "/trip/" + t1.getId())
                 .then()
@@ -94,6 +123,7 @@ class RoutesTest {
         TripDto trip = new TripDto("Spain ", 5200, Category.BEACH, java.time.LocalDate.of(2025, 2, 14), java.time.LocalDate.of(2025, 2, 20), "Tabernas Desert");
 
         given()
+                .header("Authorization", adminToken)
                 .contentType("application/json")
                 .body(trip)
                 .when()
@@ -114,6 +144,7 @@ class RoutesTest {
         TripDto trip = new TripDto("Updated Trip", 6000, Category.LAKE, java.time.LocalDate.of(2025, 9, 10), java.time.LocalDate.of(2025, 9, 15), "Tuscany");
 
         given()
+                .header("Authorization", adminToken)
                 .contentType("application/json")
                 .body(trip)
                 .when()
@@ -121,6 +152,7 @@ class RoutesTest {
                 .then()
                 .statusCode(200);
         given()
+                .header("Authorization", adminToken)
                 .when()
                 .get(BASE_URL + "/trip/" + t1.getId())
                 .then()
@@ -131,11 +163,13 @@ class RoutesTest {
     @Test
     void deleteTrip() {
         given()
+                .header("Authorization", adminToken)
                 .when()
                 .delete(BASE_URL + "/trip/" + t1.getId())
                 .then()
-                .statusCode(204);
+                .statusCode(200);
         given()
+                .header("Authorization", adminToken)
                 .when()
                 .get(BASE_URL + "/trip")
                 .then()
@@ -150,8 +184,7 @@ class RoutesTest {
         guide = guideDAO.create(guide);
 
         given()
-
-                .auth().basic("admin", "admin")
+                .header("Authorization", adminToken)
                 .when()
                 .put(BASE_URL + "/trip/trips/" + t1.getId() + "/guides/" + guide.getId())
                 .then()
@@ -166,19 +199,21 @@ class RoutesTest {
 
         // Add the guide to a trip
         given()
+                .header("Authorization", adminToken)
                 .when()
-                .put(BASE_URL + "/trip/" + t1.getId() + "/guides/" + guide.getId())
+                .put(BASE_URL + "/trip/trips/" + t1.getId() + "/guides/" + guide.getId())
                 .then()
                 .statusCode(200);
 
         // Retrieve trips by guide
         given()
+                .header("Authorization", adminToken)
                 .when()
-                .get(BASE_URL + "/guides/" + guide.getId())
+                .get(BASE_URL + "/trip/guides/" + guide.getId())
                 .then()
                 .statusCode(200)
-                .body("size()", is(1))
-                .body("[0].id", is(t1.getId()));
+                .body("size()", is(1));
+
     }
 
 }

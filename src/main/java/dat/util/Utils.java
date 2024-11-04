@@ -1,10 +1,11 @@
 package dat.util;
 
+
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import dat.exception.ApiException;
+import dat.security.exceptions.ApiException;
 import io.javalin.http.Context;
 
 import java.io.IOException;
@@ -13,10 +14,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-/**
- * Purpose: Utility class to read properties from a file
- * Author: Thomas Hartmann
- */
+///**
+// * Purpose: Utility class to read properties from a file
+// * Author: Thomas Hartmann
+// */
 public class Utils {
     public static void main(String[] args) {
         System.out.println(getPropertyValue("db.name", "properties-from-pom.properties"));
@@ -57,6 +58,16 @@ public class Utils {
             return objectMapper.writeValueAsString(msgMap);  // Convert the map to JSON
         } catch (Exception e) {
             return "{\"error\": \"Could not convert  message to JSON\"}";
+        }
+    }
+    public static String convertErrorToJson(String message) {
+        Map<String, String> errorMap = new HashMap<>();
+        errorMap.put("error", message);  // Put the message in the map
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return objectMapper.writeValueAsString(errorMap);  // Convert the map to JSON
+        } catch (Exception e) {
+            return "{\"error\": \"Could not convert error message to JSON\"}";
         }
     }
 }
