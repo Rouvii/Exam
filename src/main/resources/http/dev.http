@@ -33,11 +33,15 @@ POST {{url}}/auth/login
 
 ### Get all trips
 GET {{url}}/trips/
+Accept: application/json
 Authorization: Bearer {{jwt_token}}
 
 ### Get trip by ID
 GET {{url}}/trips/2
+Accept: application/json
 Authorization: Bearer {{jwt_token}}
+
+
 ### Create a new trip
 POST {{url}}/trips/
 Content-Type: application/json
@@ -68,6 +72,7 @@ Authorization: Bearer {{jwt_token}}
 
 ### Add a guide to a trip
 PUT {{url}}/trips/trips/10/guides/3
+Content-Type: application/json
 Authorization: Bearer {{jwt_token}}
 
 ### Delete a trip by ID
@@ -76,12 +81,16 @@ Authorization: Bearer {{jwt_token}}
 
 ### Get trips by guide ID
 GET {{url}}/trips/guides/3
+Accept: application/json
 Authorization: Bearer {{jwt_token}}
 
 ### Get trips by category
 GET {{url}}/trips/category/CITY
+Accept: application/json
 Authorization: Bearer {{jwt_token}}
 
 ### Get trips by price range
-GET {{url}}/trips/guides/totalprice
+GET {{url}}/trips/guides/totalprice/1
+Accept: application/json
 Authorization: Bearer {{jwt_token}}
+

@@ -171,7 +171,7 @@ public class TripController implements IController, ITripController {
     public void getTotalPriceByGuide(Context ctx) {
         int guideId = Integer.parseInt(ctx.pathParam("id"));
         try {
-            double totalPrice = tripDAO.getTotalPriceByGuide(guideId); // Ensure this is implemented in the DAO
+            double totalPrice = tripDAO.getTotalPriceByGuide(guideId);
             ctx.status(200).json(Map.of("guideId", guideId, "totalPrice", totalPrice));
         } catch (ApiException e) {
             ctx.status(e.getStatusCode()).json(e.getMessage());

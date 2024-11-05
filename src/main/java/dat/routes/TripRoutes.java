@@ -27,7 +27,7 @@ public class TripRoutes {
             put("trips/{id}/guides/{guideId}", tripController::addGuideToTrip, Role.ADMIN);
             get("/guides/{guideId}", tripController::getTripsByGuide, Role.USER, Role.ADMIN);
             get("/category/{category}", tripController::getTripsByCategory, Role.USER, Role.ADMIN);
-            get("/guides/totalprice/{id}", tripController::getTotalPriceByGuide, Role.USER);
+            get("/guides/totalprice/{id}", tripController::getTotalPriceByGuide, Role.USER, Role.ADMIN);
 
         };
     }
