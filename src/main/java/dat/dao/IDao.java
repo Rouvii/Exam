@@ -7,5 +7,5 @@ public interface IDao<T> {
     public T getById(int id);
     public T create(T t);
     public T update(int id, T update);
-    public T delete(long id);
+    public T delete(int id);
 }

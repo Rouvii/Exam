@@ -1,7 +1,7 @@
-GET {{URL}}/auth/test
+GET {{url}}/auth/test
 
 ###
-POST {{URL}}/auth/register
+POST {{url}}/auth/register
 Content-Type: application/json
 
 {
@@ -12,7 +12,7 @@ Content-Type: application/json
 
 ###
 
-POST {{URL}}/auth/login
+POST {{url}}/auth/login
 
 {
 
@@ -21,19 +21,27 @@ POST {{URL}}/auth/login
 
 }
 
-> {% client.global.set("jwt_token", response.body.token); %}
+> {%
+    client.global.set("jwt_token", response.body.token);
+
+%}
+
+###
+
 
 
 
 ### Get all trips
-GET {{url}}/trip/
+GET {{url}}/trips/
+Authorization: Bearer {{jwt_token}}
 
 ### Get trip by ID
-GET {{url}}/trip/12
-
+GET {{url}}/trips/2
+Authorization: Bearer {{jwt_token}}
 ### Create a new trip
-POST {{url}}/trip/
+POST {{url}}/trips/
 Content-Type: application/json
+Authorization: Bearer {{jwt_token}}
 
 {
   "name": "New Trip",
@@ -45,8 +53,9 @@ Content-Type: application/json
 }
 
 ### Update a trip by ID
-PUT {{url}}/trip/10
+PUT {{url}}/trips/10
 Content-Type: application/json
+Authorization: Bearer {{jwt_token}}
 
 {
   "name": "Updated Trip",
@@ -57,17 +66,22 @@ Content-Type: application/json
   "startPosition": "New York"
 }
 
-### Delete a trip by ID
-DELETE {{url}}/trip/13
-
 ### Add a guide to a trip
-PUT {{url}}/trip/trips/10/guides/3
+PUT {{url}}/trips/trips/10/guides/3
+Authorization: Bearer {{jwt_token}}
+
+### Delete a trip by ID
+DELETE {{url}}/trips/10
+Authorization: Bearer {{jwt_token}}
 
 ### Get trips by guide ID
-GET {{url}}/trip/guides/3
+GET {{url}}/trips/guides/3
+Authorization: Bearer {{jwt_token}}
 
 ### Get trips by category
-GET {{url}}/trip/category/CITY
+GET {{url}}/trips/category/CITY
+Authorization: Bearer {{jwt_token}}
 
 ### Get trips by price range
-GET {{url}}/trip/guides/totalprice
+GET {{url}}/trips/guides/totalprice
+Authorization: Bearer {{jwt_token}}

@@ -19,15 +19,15 @@ public class TripRoutes {
 
     public EndpointGroup getTripRoutes() {
         return () -> {
-            get("/", tripController::getAll, Role.USER);
-            get("/{id}", tripController::getById,Role.USER);
+            get("/", tripController::getAll, Role.USER, Role.ADMIN);
+            get("/{id}", tripController::getById,Role.USER, Role.ADMIN);
             post("/", tripController::create, Role.ADMIN);
             put("/{id}", tripController::update, Role.ADMIN);
             delete("/{id}", tripController::delete, Role.ADMIN);
             put("trips/{id}/guides/{guideId}", tripController::addGuideToTrip, Role.ADMIN);
-            get("/guides/{guideId}", tripController::getTripsByGuide, Role.USER);
-            get("/category/{category}", tripController::getTripsByCategory, Role.USER);
-           // get("/guides/totalprice", tripController::getGuidesWithTotalTripPrice, Role.USER);
+            get("/guides/{guideId}", tripController::getTripsByGuide, Role.USER, Role.ADMIN);
+            get("/category/{category}", tripController::getTripsByCategory, Role.USER, Role.ADMIN);
+            get("/guides/totalprice/{id}", tripController::getTotalPriceByGuide, Role.USER);
 
         };
     }

@@ -1,7 +1,7 @@
 package dat.entities;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import dat.dto.TripDto;
+import dat.dto.TripDTO;
 import dat.entities.enums.Category;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -39,7 +39,7 @@ public class Trip {
     @JsonBackReference
     private Guide guide;
 
-    public Trip(TripDto tripDto) {
+    public Trip(TripDTO tripDto) {
         this.id = tripDto.getId();
         this.name = tripDto.getName();
         this.price = tripDto.getPrice();

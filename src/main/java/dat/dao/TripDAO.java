@@ -1,12 +1,12 @@
 package dat.dao;
 
-import dat.dto.GuideDto;
-import dat.dto.TripDto;
-import dat.entities.Guide;
+import dat.dto.TripDTO;
 import dat.entities.Trip;
 import dat.entities.enums.Category;
+import dat.exception.ApiException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 import lombok.NoArgsConstructor;
 
@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @NoArgsConstructor
-public class TripDAO implements IDao<TripDto>,ITripGuideDAO {
+public class TripDAO implements IDao<TripDTO>,ITripGuideDAO {
     private static EntityManagerFactory emf;
     private static TripDAO instance;
     public TripDAO(EntityManagerFactory emf) {
@@ -30,37 +30,37 @@ public class TripDAO implements IDao<TripDto>,ITripGuideDAO {
         return instance;
     }
     @Override
-    public List<TripDto> getAll() {
+    public List<TripDTO> getAll() {
         try(EntityManager em = emf.createEntityManager()){
-            TypedQuery<TripDto> query = em.createQuery("SELECT new dat.dto.TripDto(t) FROM Trip t", TripDto.class);
+            TypedQuery<TripDTO> query = em.createQuery("SELECT new dat.dto.TripDTO(t) FROM Trip t", TripDTO.class);
             return query.getResultList();
         }
     }
 
     @Override
-    public TripDto getById(int id) {
+    public TripDTO getById(int id) {
         try(EntityManager em = emf.createEntityManager()) {
             Trip trip = em.find(Trip.class, id);
             if (trip == null) {
                 return null;
             }
-            return new TripDto(trip);
+            return new TripDTO(trip);
         }
     }
 
     @Override
-    public TripDto create(TripDto tripDto) {
+    public TripDTO create(TripDTO tripDto) {
         try (EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
             Trip trip = new Trip(tripDto);
             em.persist(trip);
             em.getTransaction().commit();
-            return new TripDto(trip);
+            return new TripDTO(trip);
         }
     }
 
     @Override
-    public TripDto update(int id, TripDto update) {
+    public TripDTO update(int id, TripDTO update) {
         try(EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
             Trip trip = em.find(Trip.class, id);
@@ -71,12 +71,12 @@ public class TripDAO implements IDao<TripDto>,ITripGuideDAO {
             trip.setEndTime(update.getEndTime());
             trip.setStartPosition(update.getStartPosition());
             em.getTransaction().commit();
-            return new TripDto(trip);
+            return new TripDTO(trip);
         }
     }
 
     @Override
-    public TripDto delete(long id) {
+    public TripDTO delete(int id) {
         try(EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
             Trip trip = em.find(Trip.class, id);
@@ -85,7 +85,7 @@ public class TripDAO implements IDao<TripDto>,ITripGuideDAO {
             }
             em.remove(trip);
             em.getTransaction().commit();
-            return new TripDto(trip);
+            return new TripDTO(trip);
         }
     }
 
@@ -101,38 +101,40 @@ public class TripDAO implements IDao<TripDto>,ITripGuideDAO {
     }
 
     @Override
-    public Set<TripDto> getTripsByGuide(int guideId) {
+    public Set<TripDTO> getTripsByGuide(int guideId) {
         try(EntityManager em = emf.createEntityManager()) {
-            TypedQuery<TripDto> query = em.createQuery("SELECT new dat.dto.TripDto(t) FROM Trip t WHERE t.guide.id = :id", TripDto.class);
+            TypedQuery<TripDTO> query = em.createQuery("SELECT new dat.dto.TripDTO(t) FROM Trip t WHERE t.guide.id = :id", TripDTO.class);
             query.setParameter("id", guideId);
             return Set.copyOf(query.getResultList());
         }
     }
 
 
-    public List<TripDto> getTripsByCategory(Category category) {
+    public List<TripDTO> getTripsByCategory(Category category) {
         try (EntityManager em = emf.createEntityManager()) {
             List<Trip> trips = em.createQuery("SELECT t FROM Trip t", Trip.class).getResultList();
             return trips.stream()
                     .filter(trip -> trip.getCategory().equals(category))
-                    .map(TripDto::new)
+                    .map(TripDTO::new)
                     .collect(Collectors.toList());
         }
     }
 
-    // WIP //
-//
-//    public List<GuideDto> getGuidesWithTotalTripPrice() {
-//        try (EntityManager em = emf.createEntityManager()) {
-//            List<Guide> guides = em.createQuery("SELECT g FROM Guide g JOIN FETCH g.trips", Guide.class).getResultList();
-//            return guides.stream()
-//                    .map(guide -> {
-//                        double totalTripPrice = guide.getTrips().stream().mapToDouble(Trip::getPrice).sum();
-//                        return new GuideDto(guide.getId(), totalTripPrice);
-//                    })
-//                    .collect(Collectors.toList());
-//        }
-//    }
+
+
+    public double getTotalPriceByGuide(int guideId) throws ApiException {
+        try (EntityManager em = emf.createEntityManager()) {
+            Double totalPrice = em.createQuery(
+                            "SELECT SUM(t.price) FROM Trip t WHERE t.guide.id = :guideId", Double.class)
+                    .setParameter("guideId", guideId)
+                    .getSingleResult();
+
+            return totalPrice != null ? totalPrice : 0.0;
+        } catch (NoResultException e) {
+            return 0.0;
+        }
+    }
+
 
 
 }

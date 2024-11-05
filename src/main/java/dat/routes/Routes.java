@@ -13,7 +13,7 @@ private static final TripRoutes tripRoutes = new TripRoutes();
   public EndpointGroup getRoutes() {
     return () -> {
 
-        path("/trip", tripRoutes.getTripRoutes());
+        path("/trips", tripRoutes.getTripRoutes());
 
     };
   }

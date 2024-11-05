@@ -1,18 +1,15 @@
 package dat.dao;
 
-import dat.dto.GuideDto;
+import dat.dto.GuideDTO;
 import dat.entities.Guide;
-import dat.entities.Trip;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.TypedQuery;
 
-import java.lang.reflect.Type;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
-public class GuideDAO implements IDao<GuideDto> {
+public class GuideDAO implements IDao<GuideDTO> {
 
     private static EntityManagerFactory emf;
     private static GuideDAO instance;
@@ -29,30 +26,30 @@ public class GuideDAO implements IDao<GuideDto> {
     }
 
     @Override
-    public List<GuideDto> getAll() {
+    public List<GuideDTO> getAll() {
         try(EntityManager em = emf.createEntityManager()){
-            TypedQuery<GuideDto> query = em.createQuery("SELECT new dat.dto.GuideDto(g) FROM Guide g", GuideDto.class);
+            TypedQuery<GuideDTO> query = em.createQuery("SELECT new dat.dto.GuideDTO(g) FROM Guide g", GuideDTO.class);
             return query.getResultList();
         }
     }
 
     @Override
-    public GuideDto getById(int id) {
+    public GuideDTO getById(int id) {
         try(EntityManager em = emf.createEntityManager()) {
             Guide guide = em.find(Guide.class, id);
-            return new GuideDto(guide);
+            return new GuideDTO(guide);
         }
     }
 
     @Override
-    public GuideDto create(GuideDto guideDto) {
+    public GuideDTO create(GuideDTO guideDto) {
         Guide guide = new Guide(guideDto);
 
         try (EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
             Guide managedGuide = em.merge(guide);
             em.getTransaction().commit();
-            return new GuideDto(managedGuide);
+            return new GuideDTO(managedGuide);
         } catch (Exception e) {
 
             throw e;
@@ -61,7 +58,7 @@ public class GuideDAO implements IDao<GuideDto> {
 
 
     @Override
-    public GuideDto update(int id, GuideDto update) {
+    public GuideDTO update(int id, GuideDTO update) {
             try(EntityManager em = emf.createEntityManager()) {
                 em.getTransaction().begin();
                 Guide guide = em.find(Guide.class, id);
@@ -71,18 +68,18 @@ public class GuideDAO implements IDao<GuideDto> {
                 guide.setPhoneNumber(update.getPhoneNumber());
                 guide.setYearsOfExperience(update.getYearsOfExperience());
                 em.getTransaction().commit();
-                return new GuideDto(guide);
+                return new GuideDTO(guide);
             }
     }
 
     @Override
-    public GuideDto delete(long id) {
+    public GuideDTO delete(int id) {
         try(EntityManager em = emf.createEntityManager()) {
             em.getTransaction().begin();
             Guide guide = em.find(Guide.class, id);
             em.remove(guide);
             em.getTransaction().commit();
-            return new GuideDto(guide);
+            return new GuideDTO(guide);
         }
     }
 

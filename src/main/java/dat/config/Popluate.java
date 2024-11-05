@@ -47,29 +47,7 @@ public class Popluate {
 
     }
 
-    public static UserDTO[] populateUsers(EntityManagerFactory emf) {
-        User user = new User("usertest", "user123");
-        User admin = new User("admintest", "admin123");
-        Role userRole = new Role("USER");
-        Role adminRole = new Role("ADMIN");
 
-        // Assign roles to users
-        user.addRole(userRole);
-        admin.addRole(adminRole);
-
-        try (var em = emf.createEntityManager()) {
-            em.getTransaction().begin();
-            em.persist(userRole);
-            em.persist(adminRole);
-            em.persist(user);
-            em.persist(admin);
-            em.getTransaction().commit();
-        }
-
-        UserDTO userDTO = new UserDTO(user.getUsername(), "user123");
-        UserDTO adminDTO = new UserDTO(admin.getUsername(), "admin123");
-        return new UserDTO[]{userDTO, adminDTO};
-    }
 
 
 

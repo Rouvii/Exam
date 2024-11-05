@@ -1,10 +1,8 @@
 package dat.entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
-import dat.dto.GuideDto;
+import dat.dto.GuideDTO;
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -36,7 +34,7 @@ public class Guide {
     @JsonManagedReference
     private Set<Trip> trips = new HashSet<>();
 
-    public Guide(GuideDto guideDto) {
+    public Guide(GuideDTO guideDto) {
         this.id = guideDto.getId();
         this.firstname = guideDto.getFirstname();
         this.lastname = guideDto.getLastname();
@@ -63,7 +61,7 @@ public class Guide {
     }
 
 
-    // Bi-directional relationship for all rooms in a hotel
+    // Bi-directional relationship for trips in Guide
     public void setTrips(Set<Trip> trips) {
         if(trips != null) {
             this.trips = trips;

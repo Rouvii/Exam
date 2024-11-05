@@ -14,18 +14,17 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class GuideDto implements Serializable {
+public class GuideDTO implements Serializable {
     private int id;
     private String firstname;
     private String lastname;
     private String email;
     private int phoneNumber;
     private int yearsOfExperience;
-    private Set<TripDto> trips = new HashSet<>();
-   // private double totalPrice;
-    //private int guideId;
+    private Set<TripDTO> trips = new HashSet<>();
 
-    public GuideDto(Guide guide) {
+
+    public GuideDTO(Guide guide) {
         this.id = guide.getId();
         this.firstname = guide.getFirstname();
         this.lastname = guide.getLastname();
@@ -34,13 +33,9 @@ public class GuideDto implements Serializable {
         this.yearsOfExperience = guide.getYearsOfExperience();
     }
 
-   // WIP//
-//    public GuideDto(int guideId, double totalTripsPrice) {
-//        this.id = guideId;
-//        this.totalPrice = totalTripsPrice;
-//    }
 
-    public GuideDto(String firstname, String lastname, String email, int phoneNumber, int yearsOfExperience) {
+
+    public GuideDTO(String firstname, String lastname, String email, int phoneNumber, int yearsOfExperience) {
         this.firstname = firstname;
         this.lastname = lastname;
         this.email = email;

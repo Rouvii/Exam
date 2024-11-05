@@ -2,23 +2,30 @@ package dat.routes;
 
 import dat.config.ApplicationConfig;
 import dat.config.HibernateConfig;
-import dat.config.Popluate;
 import dat.dao.GuideDAO;
 import dat.dao.TripDAO;
-import dat.dto.GuideDto;
-import dat.dto.TripDto;
+import dat.dto.GuideDTO;
+import dat.dto.TripDTO;
 import dat.entities.enums.Category;
 import dat.security.controllers.SecurityController;
 import dat.security.daos.SecurityDAO;
+import dat.security.exceptions.ApiException;
 import dat.security.exceptions.ValidationException;
 import dk.bugelhartmann.UserDTO;
 import io.javalin.Javalin;
+import io.restassured.common.mapper.TypeRef;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import org.junit.jupiter.api.*;
 
+import java.util.List;
+
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.core.IsNull.notNullValue;
+
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class RoutesTest {
@@ -29,13 +36,14 @@ class RoutesTest {
     private static TripDAO tripDAO;
     private static GuideDAO guideDAO;
 
-    private static String userToken, adminToken;
+
     private static final String BASE_URL = "http://localhost:7070/api";
 
-    private static TripDto t1, t2, t3;
+    private static TripDTO t1, t2;
 
-    private static GuideDto g1, g2, g3;
+    private static GuideDTO g1, g2;
     private static UserDTO userDTO, adminDTO;
+    private static String userToken, adminToken;
 
     @BeforeAll
     void setUpAll() {
@@ -46,27 +54,22 @@ class RoutesTest {
     }
 
     @BeforeEach
-    void setUp() {
+    void setup() throws ApiException {
+        System.out.println("Populating database");
 
-        t1 = new TripDto("Aalborg city tour", 3500, Category.CITY, java.time.LocalDate.of(2025, 6, 1), java.time.LocalDate.of(2025, 6, 10), "Aalborg");
-        t2 = new TripDto("Copenhagen city tour", 6700, Category.CITY, java.time.LocalDate.of(2024, 12, 4), java.time.LocalDate.of(2024, 12, 11), "Tivoli");
-        t3 = new TripDto("France forest hunt", 6700, Category.FOREST, java.time.LocalDate.of(2025, 1, 13), java.time.LocalDate.of(2025, 1, 15), "Alsace");
+        Populator.populateGuidesAndTrips(emf);
 
-        g1 = new GuideDto("Kristian", "Jensen", "KristianJensen@tour.dk", 12345678, 5);
-        g2 = new GuideDto("Frederik", "Hansen", "Hansen@Mikkel.dk", 87654321, 3);
-        g3 = new GuideDto("Torben", "Turbo", "Turbo@torben.fr", 12345678, 10);
 
-        g1 = guideDAO.create(g1);
-        g2 = guideDAO.create(g2);
-        g3 = guideDAO.create(g3);
+        g1 = guideDAO.getById(1);
+        g2 = guideDAO.getById(2);
 
-        t1 = tripDAO.create(t1);
-        t2 = tripDAO.create(t2);
-        t3 = tripDAO.create(t3);
 
-        // User setup
-        UserDTO[] userDTOs = Popluate.populateUsers(emf);
-        userDTO = userDTOs[0];  // Assuming userDTOs has at least two users
+        t1 = tripDAO.getById(1);
+        t2 = tripDAO.getById(2);
+
+
+        UserDTO[] userDTOs = Populator.populateUsers(emf);
+        userDTO = userDTOs[0];
         adminDTO = userDTOs[1];
 
         try {
@@ -86,134 +89,145 @@ class RoutesTest {
             em.createQuery("DELETE FROM Trip").executeUpdate();
             em.createQuery("DELETE FROM Guide").executeUpdate();
             em.createQuery("DELETE FROM User").executeUpdate();
-            em.createQuery("DELETE FROM Role").executeUpdate();
             em.getTransaction().commit();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
     @AfterAll
     void tearDownAll() {
-        app.stop();
+        ApplicationConfig.stopServer(app);
     }
 
+
     @Test
-    void getTrips() {
-        given()
-                .header("Authorization", userToken)
-                .when()
-                .get(BASE_URL + "/trip")
-                .then()
-                .statusCode(200)
-                .body("size()", is(3));
+    void getAllTrips() {
+        List<TripDTO> trips =
+                given()
+                        .header("Authorization", userToken)
+                        .when()
+                        .get(BASE_URL + "/trips")
+                        .then()
+                        .statusCode(200)
+                        .body("size()", is(2))
+                        .log().all()
+                        .extract()
+                        .as(new TypeRef<List<TripDTO>>() {
+                        });
+
+        assertThat(trips.size(), is(2));
     }
 
     @Test
     void getTripById() {
-        given()
-                .header("Authorization", userToken)
-                .when()
-                .get(BASE_URL + "/trip/" + t1.getId())
-                .then()
-                .statusCode(200)
-                .body("name", is(t1.getName()));
+        TripDTO trip =
+                given()
+                        .header("Authorization", userToken)
+                        .when()
+                        .get(BASE_URL + "/trips/" + t1.getId())
+                        .then()
+                        .statusCode(200)
+                        .log().all()
+                        .extract()
+                        .as(TripDTO.class);
+
+        assertThat(trip.getName(), is(t1.getName()));
     }
 
     @Test
     void createTrip() {
-        TripDto trip = new TripDto("Spain ", 5200, Category.BEACH, java.time.LocalDate.of(2025, 2, 14), java.time.LocalDate.of(2025, 2, 20), "Tabernas Desert");
+        TripDTO newTrip = new TripDTO();
+        newTrip.setName("Beach Getaway");
+        newTrip.setStartTime(java.time.LocalDate.of(2025, 6, 1));
+        newTrip.setEndTime(java.time.LocalDate.of(2025, 6, 1));
+        newTrip.setStartPosition("Beach Entrance");
+        newTrip.setPrice(39.99);
+        newTrip.setCategory(Category.BEACH);
+        newTrip.setGuide(g1);
 
-        given()
-                .header("Authorization", adminToken)
-                .contentType("application/json")
-                .body(trip)
-                .when()
-                .post(BASE_URL + "/trip")
-                .then()
-                .statusCode(201);
-        given()
-                .when()
-                .get(BASE_URL + "/trip")
-                .then()
-                .statusCode(200)
-                .body("size()", is(4));
+        TripDTO createdTrip =
+                given()
+                        .header("Authorization", adminToken)
+                        .contentType("application/json")
+                        .body(newTrip)
+                        .when()
+                        .post(BASE_URL + "/trips")
+                        .then()
+                        .statusCode(201)
+                        .log().all()
+                        .extract()
+                        .as(TripDTO.class);
+
+        assertThat(createdTrip.getId(), is(notNullValue()));
+        assertThat(createdTrip.getName(), is(newTrip.getName()));
     }
 
     @Test
     void updateTrip() {
 
-        TripDto trip = new TripDto("Updated Trip", 6000, Category.LAKE, java.time.LocalDate.of(2025, 9, 10), java.time.LocalDate.of(2025, 9, 15), "Tuscany");
+        TripDTO updatedTrip = new TripDTO();
+        updatedTrip.setId(t1.getId());
+        updatedTrip.setName("City Tour 2.0");
+        updatedTrip.setStartTime(java.time.LocalDate.of(2025, 6, 1));
+        updatedTrip.setStartTime(java.time.LocalDate.of(2025, 6, 1));
+        updatedTrip.setStartPosition("Main Square 2");
+        updatedTrip.setPrice(34.99);
+        updatedTrip.setCategory(Category.CITY);
+        updatedTrip.setGuide(g2);
 
-        given()
-                .header("Authorization", adminToken)
-                .contentType("application/json")
-                .body(trip)
-                .when()
-                .put(BASE_URL + "/trip/" + t1.getId())
-                .then()
-                .statusCode(200);
-        given()
-                .header("Authorization", adminToken)
-                .when()
-                .get(BASE_URL + "/trip/" + t1.getId())
-                .then()
-                .statusCode(200)
-                .body("name", is("Updated Trip"));
+        TripDTO updated =
+                given()
+                        .header("Authorization", adminToken)
+                        .contentType("application/json")
+                        .body(updatedTrip)
+                        .when()
+                        .put(BASE_URL + "/trips/" + updatedTrip.getId())
+                        .then()
+                        .statusCode(200)
+                        .log().all()
+                        .extract()
+                        .as(TripDTO.class);
+
+        assertThat(updated.getName(), is(updatedTrip.getName()));
     }
+
 
     @Test
     void deleteTrip() {
         given()
                 .header("Authorization", adminToken)
                 .when()
-                .delete(BASE_URL + "/trip/" + t1.getId())
+                .delete(BASE_URL + "/trips/" + t1.getId())
                 .then()
                 .statusCode(200);
+
+        // Verification
         given()
-                .header("Authorization", adminToken)
+                .header("Authorization", userToken)
                 .when()
-                .get(BASE_URL + "/trip")
+                .get(BASE_URL + "/trips/" + t1.getId())
                 .then()
-                .statusCode(200)
-                .body("size()", is(2));
+                .statusCode(404); // not found after deletion
     }
+
 
     @Test
-    void addGuideToTrip() {
+    void getTripsByCategory() {
+        List<TripDTO> trips =
+                given()
+                        .header("Authorization", userToken)
+                        .when()
+                        .get(BASE_URL + "/trips/category/" + Category.CITY)
+                        .then()
+                        .statusCode(200)
+                        .log().all()
+                        .extract()
+                        .as(new TypeRef<List<TripDTO>>() {
+                        });
 
-        GuideDto guide = new GuideDto("John", "Doe", "john.doe@example.com", 1234567890, 5);
-        guide = guideDAO.create(guide);
-
-        given()
-                .header("Authorization", adminToken)
-                .when()
-                .put(BASE_URL + "/trip/trips/" + t1.getId() + "/guides/" + guide.getId())
-                .then()
-                .statusCode(200);
+        assertThat(trips.size(), is(greaterThan(0)));
     }
 
-    @Test
-    void getTripsByGuide() {
-        // Assuming you have a GuideDto class and a guideDAO to create a guide
-        GuideDto guide = new GuideDto("John", "Doe", "john.doe@example.com", 1234567890, 5);
-        guide = guideDAO.create(guide);
-
-        // Add the guide to a trip
-        given()
-                .header("Authorization", adminToken)
-                .when()
-                .put(BASE_URL + "/trip/trips/" + t1.getId() + "/guides/" + guide.getId())
-                .then()
-                .statusCode(200);
-
-        // Retrieve trips by guide
-        given()
-                .header("Authorization", adminToken)
-                .when()
-                .get(BASE_URL + "/trip/guides/" + guide.getId())
-                .then()
-                .statusCode(200)
-                .body("size()", is(1));
-
-    }
 
 }

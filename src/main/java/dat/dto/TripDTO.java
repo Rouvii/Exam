@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TripDto implements Serializable {
+public class TripDTO implements Serializable {
     private Integer id;
     private String name;
     private double price;
@@ -19,9 +19,11 @@ public class TripDto implements Serializable {
     private LocalDate startTime;
     private LocalDate endTime;
     private String startPosition;
-    private GuideDto guide;
+    private GuideDTO guide;
 
-    public TripDto(Trip trip) {
+
+
+    public TripDTO(Trip trip) {
         this.id = trip.getId();
         this.name = trip.getName();
         this.price = trip.getPrice();
@@ -30,11 +32,11 @@ public class TripDto implements Serializable {
         this.endTime = trip.getEndTime();
         this.startPosition = trip.getStartPosition();
         if (trip.getGuide() != null) {
-            this.guide = new GuideDto(trip.getGuide());
+            this.guide = new GuideDTO(trip.getGuide());
         }
     }
 
-    public TripDto(String name, double price, Category category, LocalDate startTime, LocalDate endTime, String startPosition) {
+    public TripDTO(String name, double price, Category category, LocalDate startTime, LocalDate endTime, String startPosition) {
         this.name = name;
         this.price = price;
         this.category = category;
